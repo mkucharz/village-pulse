@@ -1,0 +1,30 @@
+# Build artifacts
+/tmp/
+/static/output.css
+/static/output.css.map
+
+# Data
+/data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config (contains secrets)
+village.yaml
+
+# Go
+*.exe
+*.test
+*.out
+vendor/
+
+# Docker
+.env
+.air.toml

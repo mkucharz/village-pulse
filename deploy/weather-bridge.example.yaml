@@ -1,0 +1,18 @@
+# weather-bridge.example.yaml
+# Copy to /opt/village-pulse/weather-bridge.yaml and edit
+
+village:
+  name: "My Village"
+  latitude: 48.8566
+  longitude: 2.3522
+  timezone: Europe/Paris
+
+mqtt:
+  broker: "tcp://mosquitto:1883"
+  topic_prefix: "village/my-village"
+
+weather:
+  units: metric              # metric | imperial | hybrid
+  forecast_days: 7
+  current_interval: 15m       # how often to fetch current conditions
+  forecast_interval: 30m      # how often to fetch forecast

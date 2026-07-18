@@ -1,0 +1,174 @@
+name: Deploy village-pulse
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "*.templ"
+      - "assets/**"
+      - "Dockerfile"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image version tag (default: latest)"
+        required: false
+        default: "latest"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+            type=raw,value=${{ inputs.version || 'latest' }}
+            type=sha,prefix=sha-
+
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=village-pulse
+          cache-to: type=gha,mode=max,scope=village-pulse
+
+    outputs:
+      version: ${{ inputs.version || 'latest' }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version tag
+        id: ver
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Deploying version: ${VERSION}"
+
+      - name: Connect Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+          tags: tag:ci
+          args: --accept-dns=true
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' \
+            'Host village-host' \
+            '  HostName ${{ secrets.DEPLOY_HOST }}' \
+            '  User ${{ secrets.DEPLOY_USER }}' \
+            '  IdentityFile ~/.ssh/id_deploy' \
+            '  StrictHostKeyChecking accept-new' \
+            '  ConnectTimeout 15' \
+            >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          ssh -o BatchMode=yes village-host echo "reachable"
+
+      - name: SCP compose file
+        run: |
+          scp docker-compose.yml village-host:/opt/village-pulse/docker-compose.yml
+
+      - name: Write .env on target
+        run: |
+          ssh village-host 'cat > /opt/village-pulse/.env << ENVEOF
+          VERSION=${{ steps.ver.outputs.version }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+          CSRF_SECRET=${{ secrets.CSRF_SECRET }}
+          ENVEOF'
+
+      - name: Login to GHCR on target
+        run: |
+          ssh village-host "echo '${{ secrets.GHCR_PAT }}' | docker login ghcr.io -u '${{ secrets.GHCR_USER }}' --password-stdin"
+
+      - name: Pull images
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          ssh village-host "cd /opt/village-pulse && \
+            VERSION=${VERSION} docker compose pull"
+
+      - name: Restart stack
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          ssh village-host "cd /opt/village-pulse && \
+            VERSION=${VERSION} docker compose up -d"
+
+      - name: Wait for healthy
+        timeout-minutes: 2
+        run: |
+          for i in $(seq 1 24); do
+            if ssh village-host 'wget -qO- http://localhost:9080/health' 2>/dev/null | grep -q '"status":"ok"'; then
+              echo "village-pulse healthy ($(date))"
+              exit 0
+            fi
+            echo "Waiting... ($i/24)"
+            sleep 5
+          done
+          echo "Health check failed"
+          ssh village-host "cd /opt/village-pulse && docker compose logs --tail=50 village-pulse"
+          exit 1
+
+      - name: Verify dashboard
+        run: |
+          STATUS=$(ssh village-host "wget -qO- http://localhost:9080/health")
+          echo "Health: $STATUS"
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deploy failed. Rolling back..."
+          ssh village-host "cd /opt/village-pulse && docker compose restart"
+          echo "Rollback complete."
+
+      - name: Summary
+        if: always()
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          {
+            echo "## Deploy Summary"
+            echo ""
+            echo "| Item | Value |"
+            echo "|------|-------|"
+            echo "| Image | \`ghcr.io/${{ env.IMAGE_NAME }}:${VERSION}\` |"
+            echo "| Target | \`${{ secrets.DEPLOY_HOST }}\` |"
+            echo "| Status | ${{ job.status }} |"
+            echo ""
+            echo "Dashboard: https://village-pulse.b4ng.link/dashboard"
+            echo "Health: https://village-pulse.b4ng.link/health"
+          } >> $GITHUB_STEP_SUMMARY

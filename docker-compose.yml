@@ -1,0 +1,72 @@
+services:
+  village-pulse:
+    image: ghcr.io/mkucharz/village-pulse:${VERSION:-latest}
+    container_name: village-pulse
+    restart: unless-stopped
+    ports:
+      - "9080:9080"
+    volumes:
+      - village-data:/data
+      - ./village.yaml:/data/village.yaml:ro
+    networks:
+      - traefik-public
+      - village-internal
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.village-pulse.rule=Host(`village-pulse.b4ng.link`)"
+      - "traefik.http.routers.village-pulse.entrypoints=websecure"
+      - "traefik.http.routers.village-pulse.tls=true"
+      - "traefik.http.routers.village-pulse.tls.certresolver=letsencrypt"
+      - "traefik.http.services.village-pulse.loadbalancer.server.port=9080"
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: village-mosquitto
+    restart: unless-stopped
+    volumes:
+      - mosquitto-data:/mosquitto/data
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      - village-internal
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-W", "2"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  weather-bridge:
+    image: ghcr.io/mkucharz/weather-mqtt-bridge:${VERSION:-latest}
+    container_name: village-weather-bridge
+    restart: unless-stopped
+    volumes:
+      - ./weather-bridge.yaml:/data/config.yaml:ro
+    networks:
+      - village-internal
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+  ics-bridge:
+    image: ghcr.io/mkucharz/ics-mqtt-bridge:${VERSION:-latest}
+    container_name: village-ics-bridge
+    restart: unless-stopped
+    volumes:
+      - ./ics-bridge.yaml:/data/config.yaml:ro
+    networks:
+      - village-internal
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+volumes:
+  village-data:
+  mosquitto-data:
+
+networks:
+  traefik-public:
+    external: true
+  village-internal:
+    internal: true

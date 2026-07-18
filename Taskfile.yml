@@ -1,0 +1,47 @@
+version: "3"
+
+tasks:
+  build:
+    desc: Build binary + CSS
+    cmds:
+      - templ generate
+      - tailwindcss -i assets/input.css -o static/output.css --minify
+      - CGO_ENABLED=0 go build -ldflags="-s -w" -o village-pulse ./cmd/village-pulse
+
+  dev:
+    desc: Dev mode (hot reload + CSS watch)
+    cmds:
+      - task css:watch &
+      - go run ./cmd/village-pulse
+
+  generate:
+    desc: Generate Templ code
+    cmds:
+      - templ generate
+
+  css:
+    desc: Build CSS
+    cmds:
+      - tailwindcss -i assets/input.css -o static/output.css --minify
+
+  css:watch:
+    desc: Watch CSS changes
+    cmds:
+      - tailwindcss -i assets/input.css -o static/output.css --watch
+
+  lint:
+    desc: Lint Go code
+    cmds:
+      - golangci-lint run ./...
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -race -count=1 ./...
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -f village-pulse
+      - rm -rf static/output.css
+      - rm -rf data/

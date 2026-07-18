@@ -1,0 +1,28 @@
+# Build artifacts
+/village-pulse
+/tmp/
+/static/output.css
+/static/output.css.map
+
+# Data
+/data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+__MACOSX
+
+# Config (contains secrets)
+village.yaml
+
+# Go
+*.exe
+*.test
+*.out
+vendor/

@@ -1,0 +1,23 @@
+# ics-bridge.example.yaml
+# Copy to /opt/village-pulse/ics-bridge.yaml and edit
+
+village:
+  name: "My Village"
+  timezone: Europe/Paris
+
+mqtt:
+  broker: "tcp://mosquitto:1883"
+  topic_prefix: "village/my-village"
+
+feeds:
+  # Get ICS URLs from:
+  # Google Calendar: Settings → Integrate calendar → Secret address in iCal format
+  # Outlook: Settings → Calendar → Shared calendars → Publish → ICS
+  # iCloud: Calendar → Share → Public Calendar → Copy Link
+  - url: https://calendar.google.com/calendar/ical/example/basic.ics
+    name: "Village Events"
+    color: "#3b82f6"
+
+sync:
+  interval: 1h
+  recurrence_expand_days: 90
