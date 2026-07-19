@@ -133,7 +133,7 @@ jobs:
         timeout-minutes: 2
         run: |
           for i in $(seq 1 24); do
-            if ssh village-host 'wget -qO- http://localhost:9080/health' 2>/dev/null | grep -q '"status":"ok"'; then
+            if ssh village-host 'wget -qO- http://localhost:8080/health' 2>/dev/null | grep -q '"status":"ok"'; then
               echo "village-pulse healthy ($(date))"
               exit 0
             fi
@@ -146,7 +146,7 @@ jobs:
 
       - name: Verify dashboard
         run: |
-          STATUS=$(ssh village-host "wget -qO- http://localhost:9080/health")
+          STATUS=$(ssh village-host "wget -qO- http://localhost:8080/health")
           echo "Health: $STATUS"
 
       - name: Rollback on failure
@@ -169,6 +169,6 @@ jobs:
             echo "| Target | \`${{ secrets.DEPLOY_HOST }}\` |"
             echo "| Status | ${{ job.status }} |"
             echo ""
-            echo "Dashboard: https://village-pulse.b4ng.link/dashboard"
-            echo "Health: https://village-pulse.b4ng.link/health"
+            echo "Dashboard: https://village-pulse.cloud.b4ng.link/dashboard"
+            echo "Health: https://village-pulse.cloud.b4ng.link/health"
           } >> $GITHUB_STEP_SUMMARY
