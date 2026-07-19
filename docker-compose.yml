@@ -59,4 +59,4 @@ volumes:
 
 networks:
   village-internal:
-    internal: true
+    driver: bridge

@@ -1,0 +1,5 @@
+village-pulse.cloud.b4ng.link {
+	reverse_proxy village-pulse:8080
+	encode gzip
+	header Strict-Transport-Security "max-age=63072000"
+}
