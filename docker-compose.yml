@@ -4,23 +4,15 @@ services:
     container_name: village-pulse
     restart: unless-stopped
     ports:
-      - "9080:9080"
+      - "8080:8080"
     volumes:
       - village-data:/data
       - ./village.yaml:/data/village.yaml:ro
     networks:
-      - traefik-public
       - village-internal
     depends_on:
       mosquitto:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.village-pulse.rule=Host(`village-pulse.b4ng.link`)"
-      - "traefik.http.routers.village-pulse.entrypoints=websecure"
-      - "traefik.http.routers.village-pulse.tls=true"
-      - "traefik.http.routers.village-pulse.tls.certresolver=letsencrypt"
-      - "traefik.http.services.village-pulse.loadbalancer.server.port=9080"
 
   mosquitto:
     image: eclipse-mosquitto:2
@@ -66,7 +58,5 @@ volumes:
   mosquitto-data:
 
 networks:
-  traefik-public:
-    external: true
   village-internal:
     internal: true
