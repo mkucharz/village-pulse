@@ -46,69 +46,65 @@ templ DashboardPage(data DashboardData) {
 
 templ WeatherWidget(w WeatherData) {
 	@ui.Card("☀️ Weather", nil) {
-		<div class="flex items-start gap-4">
-			<div class="text-6xl leading-none flex-shrink-0">{ weatherIcon(w.Condition) }</div>
-			<div class="flex flex-col gap-1 flex-1 min-w-0">
-				<div class="flex items-baseline gap-2">
-					<span class="text-5xl font-bold tracking-tight">{ fmt.Sprintf("%.0f", w.Temperature) }</span>
-					<span class="text-xl text-base-content/60">{ w.TemperatureUnit }</span>
-				</div>
-				<div class="text-sm text-base-content/70 font-medium">{ w.ConditionText }</div>
-				<div class="text-xs text-base-content/50 mt-0.5">
-					Feels { fmt.Sprintf("%.0f", w.FeelsLike) }° · { fmt.Sprintf("%.0f %s %s", w.WindSpeed, w.WindSpeedUnit, w.WindDirection) }
-				</div>
-				<div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
-					<div class="flex items-center gap-1.5">
-						<span class="text-sm">💧</span>
-						<span class="text-xs font-mono">{ fmt.Sprintf("%.0f%%", w.Humidity) }</span>
-					</div>
-					<div class="flex items-center gap-1.5">
-						<span class="text-sm">🌬</span>
-						<span class="text-xs font-mono">{ fmt.Sprintf("%.0f %s", w.WindSpeed, w.WindSpeedUnit) }</span>
-					</div>
-					<div class="flex items-center gap-1.5">
-						<span class="text-sm">📊</span>
-						<span class="text-xs font-mono">{ fmt.Sprintf("%.0f %s", w.Pressure, w.PressureUnit) }</span>
-					</div>
-					<div class="flex items-center gap-1.5">
-						<span class="text-sm">☀️</span>
-						<span class="text-xs font-mono">{ fmt.Sprintf("%.0f UV", 5.0) }</span>
-					</div>
+		<div class="flex items-center w-full min-w-0">
+			<div class="flex-shrink-0 mr-4" style="width:64px;height:64px;">
+				<div class="text-6xl leading-none flex items-center justify-center h-full">{ weatherIcon(w.Condition) }</div>
+			</div>
+			<div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+				<div class="text-lg text-base-content/70 truncate">{ w.ConditionText }</div>
+			</div>
+			<div class="flex flex-col items-end flex-shrink-0 ml-2">
+				<div class="text-3xl font-bold leading-tight whitespace-nowrap">{ fmt.Sprintf("%.1f", w.Temperature) }{ w.TemperatureUnit }</div>
+				<div class="flex items-center gap-1 text-sm text-base-content/50">
+					<span>🌡</span>
+					<span>{ fmt.Sprintf("Feels %.0f° · %.0f %s %s", w.FeelsLike, w.WindSpeed, w.WindSpeedUnit, w.WindDirection) }</span>
 				</div>
 			</div>
 		</div>
 		@ui.Divider(ui.DividerNeutral, false)
-		<div class="flex items-center gap-2 mb-2">
-			<a href="#" class="text-xs font-semibold text-primary uppercase tracking-wide border-b-2 border-primary pb-0.5">Daily</a>
-			<a href="#" class="text-xs font-semibold text-base-content/40 uppercase tracking-wide hover:text-base-content/60">Hourly</a>
+		<div class="grid grid-cols-2 gap-x-5 gap-y-1 text-sm">
+			<div class="flex items-center gap-2"><span>💧</span><span class="font-mono">{ fmt.Sprintf("%.0f%%", w.Humidity) }</span></div>
+			<div class="flex items-center gap-2 flex-row-reverse"><span>🌬</span><span class="font-mono">{ fmt.Sprintf("%.0f %s %s", w.WindSpeed, w.WindSpeedUnit, w.WindDirection) }</span></div>
+			<div class="flex items-center gap-2"><span>📊</span><span class="font-mono">{ fmt.Sprintf("%.0f %s", w.Pressure, w.PressureUnit) }</span></div>
+			<div class="flex items-center gap-2 flex-row-reverse"><span>☀️</span><span class="font-mono">UV 5</span></div>
 		</div>
-		@ForecastRow(w.Forecast)
+		@ui.Divider(ui.DividerNeutral, false)
+		<div class="flex items-center gap-3 mb-1">
+			<a href="#" class="text-xs font-semibold text-primary uppercase border-b-2 border-primary pb-0.5">Daily</a>
+			<a href="#" class="text-xs font-semibold text-base-content/40 uppercase hover:text-base-content/60">Hourly</a>
+		</div>
+		<div class="w-full overflow-x-auto scrollbar-none cursor-grab select-none overscroll-x-contain" style="scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;">
+			<div class="flex flex-row justify-start gap-0">
+				for _, d := range w.Forecast {
+					<div class="flex flex-col items-center text-center py-0.5 px-0.5 flex-shrink-0" style="min-width:70px; max-width:70px; scroll-snap-align:start;">
+						<div class="text-[11px] font-semibold text-base-content/50 uppercase tracking-wider h-5 leading-5">{ d.Day }</div>
+						<div class="py-0.5" style="width:36px;height:36px;">
+							<div class="text-2xl">{ weatherIcon(d.Condition) }</div>
+						</div>
+						<div class="flex items-center justify-center whitespace-nowrap text-sm gap-0.5 min-h-5">
+							<span class="font-semibold">{ fmt.Sprintf("%.0f°", d.High) }</span>
+							<span class="text-base-content/40">{ fmt.Sprintf("%.0f°", d.Low) }</span>
+						</div>
+						<div class="relative flex items-end justify-center mt-1" style="height:18px;width:30px;">
+							<div class="absolute bottom-0 rounded-sm overflow-hidden flex flex-col justify-end" style={ fmt.Sprintf("height:%d%%;width:30px;background:rgba(33,150,243,0.4)", precipBarPct(d.PrecipProb)) }></div>
+							<div class="relative z-10 text-[11px] font-medium text-info leading-4">{ fmt.Sprintf("%d%%", d.PrecipProb) }</div>
+						</div>
+						if d.PrecipAmount > 0 {
+							<div class="text-[10px] text-base-content/40 font-mono">{ fmt.Sprintf("%.1f mm", d.PrecipAmount) }</div>
+						}
+						if d.WindDir != "" {
+							<div class="text-[10px] text-base-content/30 mt-0.5">{ d.WindDir }</div>
+						}
+					</div>
+				}
+			</div>
+		</div>
 	}
 }
 
-templ ForecastRow(days []ForecastDay) {
-	<div class="flex overflow-x-auto gap-0 -mx-1">
-		for _, d := range days {
-			<div class="flex flex-col items-center min-w-[72px] text-center py-2 px-1 hover:bg-base-200/30 rounded-lg transition-colors">
-				<div class="text-[11px] font-semibold text-base-content/50 uppercase tracking-wider mb-1">{ d.Day }</div>
-				<div class="text-xl my-1">{ weatherIcon(d.Condition) }</div>
-				<div class="text-sm font-bold">{ fmt.Sprintf("%.0f°", d.High) }</div>
-				<div class="text-[11px] text-base-content/40">{ fmt.Sprintf("%.0f°", d.Low) }</div>
-				<div class="w-full px-1 mt-1.5">
-					<div class="h-1 bg-base-300 rounded-full overflow-hidden">
-						<div class="h-full rounded-full transition-all" style={ fmt.Sprintf("width:%d%%; background:%s", min(d.PrecipProb, 100), precipColor(d.PrecipProb)) }></div>
-					</div>
-				</div>
-				<div class="text-[10px] text-base-content/50 mt-0.5">{ fmt.Sprintf("%d%%", d.PrecipProb) }</div>
-				if d.PrecipAmount > 0 {
-					<div class="text-[10px] text-base-content/40 font-mono">{ fmt.Sprintf("%.1f mm", d.PrecipAmount) }</div>
-				}
-				if d.WindDir != "" {
-					<div class="text-[10px] text-base-content/30 mt-0.5">{ d.WindDir }</div>
-				}
-			</div>
-		}
-	</div>
+func precipBarPct(prob int) int {
+	if prob > 100 { return 100 }
+	return prob
 }
 
 func precipColor(prob int) string {
