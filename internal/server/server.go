@@ -117,11 +117,11 @@ func demoWeather() templates.WeatherData {
 		Pressure:        1013.2,
 		PressureUnit:    "hPa",
 		Forecast: []templates.ForecastDay{
-			{Day: "Mon", Condition: "sunny", High: 28, Low: 14, PrecipProb: 5, PrecipAmount: 0},
-			{Day: "Tue", Condition: "cloudy", High: 24, Low: 12, PrecipProb: 60, PrecipAmount: 2.4},
-			{Day: "Wed", Condition: "rainy", High: 18, Low: 10, PrecipProb: 90, PrecipAmount: 8.1},
-			{Day: "Thu", Condition: "partlycloudy", High: 21, Low: 13, PrecipProb: 15, PrecipAmount: 0.3},
-			{Day: "Fri", Condition: "sunny", High: 26, Low: 15, PrecipProb: 0, PrecipAmount: 0},
+			{Day: "Mon", Condition: "sunny", High: 28, Low: 14, PrecipProb: 5, PrecipAmount: 0, WindDir: "NE"},
+			{Day: "Tue", Condition: "cloudy", High: 24, Low: 12, PrecipProb: 60, PrecipAmount: 2.4, WindDir: "SW"},
+			{Day: "Wed", Condition: "rainy", High: 18, Low: 10, PrecipProb: 90, PrecipAmount: 8.1, WindDir: "W"},
+			{Day: "Thu", Condition: "partlycloudy", High: 21, Low: 13, PrecipProb: 15, PrecipAmount: 0.3, WindDir: "N"},
+			{Day: "Fri", Condition: "sunny", High: 26, Low: 15, PrecipProb: 0, PrecipAmount: 0, WindDir: "SE"},
 		},
 	}
 }

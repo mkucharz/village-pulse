@@ -37,6 +37,7 @@ type ForecastDay struct {
 	Low         float64
 	PrecipProb  int
 	PrecipAmount float64
+	WindDir     string
 }
 
 // Events
