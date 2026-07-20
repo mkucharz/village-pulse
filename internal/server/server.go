@@ -38,6 +38,11 @@ func New(cfg *config.Config, db *sql.DB, log *slog.Logger) (*Server, error) {
 	e.GET("/", s.dashboardHandler)
 	e.GET("/dashboard", s.dashboardHandler)
 
+	// Comparison viewer
+	e.Static("/static", "static")
+	e.GET("/compare", s.compareIndexHandler)
+	e.GET("/compare/:slug", s.compareHandler)
+
 	e.HTTPErrorHandler = s.errorHandler
 
 	return s, nil
@@ -100,6 +105,46 @@ func (s *Server) errorHandler(err error, c echo.Context) {
 }
 
 func init() { _ = os.Setenv("TZ", "UTC") }
+
+// ── Comparison viewer ────────────────────────────────────────────────────────
+
+var compareItems = []templates.CompareItem{
+	{Name: "Weather", Slug: "weather", Icon: "☀️"},
+	{Name: "Events", Slug: "events", Icon: "📅"},
+	{Name: "Alerts", Slug: "alerts", Icon: "⚠️"},
+	{Name: "Energy", Slug: "energy", Icon: "⚡"},
+}
+
+func (s *Server) compareIndexHandler(c echo.Context) error {
+	return c.Redirect(http.StatusFound, "/compare/weather")
+}
+
+func (s *Server) compareHandler(c echo.Context) error {
+	slug := c.Param("slug")
+
+	data := templates.CompareData{
+		Components: compareItems,
+		RefImage:   "/static/ref/" + slug + ".png",
+	}
+
+	w := demoWeather()
+	e := demoEvents()
+	a := demoAlerts()
+	en := demoEnergy()
+
+	switch slug {
+	case "weather":
+		data.Weather = &w
+	case "events":
+		data.Events = &e
+	case "alerts":
+		data.Alerts = &a
+	case "energy":
+		data.Energy = &en
+	}
+
+	return templates.ComparePage(data, slug).Render(c.Request().Context(), c.Response())
+}
 
 // ── Demo data ─────────────────────────────────────────────────────────────────
 

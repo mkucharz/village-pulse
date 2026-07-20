@@ -1,0 +1,59 @@
+{
+  "village": {
+    "name": "Waliły",
+    "description": "Community Dashboard",
+    "latitude": 53.139,
+    "longitude": 23.594,
+    "timezone": "Europe/Warsaw"
+  },
+  "weather": {
+    "current": {
+      "condition": "partlycloudy",
+      "conditionText": "Partly Cloudy",
+      "temperature": 22.0,
+      "temperatureUnit": "°C",
+      "humidity": 56,
+      "pressure": 1013.2,
+      "pressureUnit": "hPa",
+      "windSpeed": 12.5,
+      "windSpeedUnit": "km/h",
+      "windDirection": "SW",
+      "feelsLike": 24.1,
+      "uvIndex": 5
+    },
+    "forecast": [
+      {"day":"Mon","condition":"sunny","high":28,"low":14,"precipProb":5,"precipAmount":0.0,"windDir":"NE"},
+      {"day":"Tue","condition":"cloudy","high":24,"low":12,"precipProb":60,"precipAmount":2.4,"windDir":"SW"},
+      {"day":"Wed","condition":"rainy","high":18,"low":10,"precipProb":90,"precipAmount":8.1,"windDir":"W"},
+      {"day":"Thu","condition":"partlycloudy","high":21,"low":13,"precipProb":15,"precipAmount":0.3,"windDir":"N"},
+      {"day":"Fri","condition":"sunny","high":26,"low":15,"precipProb":0,"precipAmount":0.0,"windDir":"SE"}
+    ]
+  },
+  "events": {
+    "today": [
+      {"title":"Farmers Market","time":"14:00 - 18:00","location":"Market Square","color":"#10b981"},
+      {"title":"Village Assembly","time":"19:00","location":"Community Hall","color":"#3b82f6"}
+    ],
+    "thisWeek": [
+      {"title":"Summer Festival","time":"Sat 10:00 → Sun 22:00","location":"Park","color":"#10b981"},
+      {"title":"Village Council","time":"Tue 18:00","location":"Town Hall","color":"#3b82f6"},
+      {"title":"Waste Collection","time":"Wed 07:00","location":"All streets","color":"#f59e0b"}
+    ],
+    "totalCount": 5
+  },
+  "alerts": {
+    "items": [
+      {"severity":"critical","title":"Heatwave Warning","message":"Temperatures up to 38°C expected. Stay hydrated. Community pool open extended hours.","expiry":"Fri 22:00","pinned":true},
+      {"severity":"warning","title":"Road Works","message":"Main Street closed between Church and School. Detour via Park Road.","expiry":"18.07.2026","pinned":false}
+    ]
+  },
+  "energy": {
+    "entities": [
+      {"name":"Solar Production","value":"42.5","unit":"kWh","icon":"sun","trend":"up","trendLabel":"12%"},
+      {"name":"Village Consumption","value":"-28.3","unit":"kWh","icon":"zap","trend":"down","trendLabel":"5%"},
+      {"name":"Grid Export","value":"+14.2","unit":"kWh","icon":"plug","trend":"neutral","trendLabel":"0%"}
+    ],
+    "sparkline": [5,12,8,15,20,18,25],
+    "updatedAt": "2 min ago"
+  }
+}
