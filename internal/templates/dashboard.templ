@@ -1,6 +1,9 @@
 package templates
 
-import "fmt"
+import (
+	"fmt"
+	ui "github.com/emergent-company/go-daisy/components/ui"
+)
 
 templ DashboardPage(data DashboardData) {
 	<!DOCTYPE html>
@@ -11,56 +14,47 @@ templ DashboardPage(data DashboardData) {
 			<title>{ data.VillageName } — Community Dashboard</title>
 			<script src="https://cdn.tailwindcss.com"></script>
 			<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
+			<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 			<script src="https://cdn.jsdelivr.net/npm/htmx.org@next/dist/htmx.min.js"></script>
 		</head>
 		<body class="min-h-screen bg-base-200">
 			<div class="max-w-6xl mx-auto px-4 py-6">
-				@Header(data.VillageName, data.Description)
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-					@WeatherCard(data.Weather)
-					@EventsCard(data.Events)
-					@AlertsCard(data.Alerts)
-					@EnergyCard(data.Energy)
+				<div class="flex justify-between items-center mb-4">
+					<div>
+						<h1 class="text-3xl font-bold text-base-content">{ data.VillageName }</h1>
+						if data.Description != "" {
+							<p class="text-base-content/60">{ data.Description }</p>
+						}
+					</div>
+					@ui.ThemeSwitcher()
 				</div>
-				@Footer()
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+					@WeatherWidget(data.Weather)
+					@EventsWidget(data.Events)
+					@AlertsWidget(data.Alerts)
+					@EnergyWidget(data.Energy)
+				</div>
+				<div class="text-center mt-8 pb-4 text-xs text-base-content/40">
+					Powered by village-pulse
+				</div>
 			</div>
 		</body>
 	</html>
 }
 
-templ Header(name, description string) {
-	<div class="text-center mb-2">
-		<h1 class="text-3xl font-bold text-base-content">{ name }</h1>
-		if description != "" {
-			<p class="text-base-content/60">{ description }</p>
-		}
-	</div>
-}
-
-templ Footer() {
-	<div class="text-center mt-8 pb-4 text-xs text-base-content/40">
-		Powered by village-pulse
-	</div>
-}
-
 // ── Weather ─────────────────────────────────────────────────────────────────
 
-templ WeatherCard(w WeatherData) {
-	<div class="card bg-base-100 shadow-sm">
-		<div class="card-body p-5">
-			<h2 class="card-title text-lg mb-3">
-				<span>☀️ Weather</span>
-			</h2>
-			@CurrentConditions(w)
-			<div class="divider my-2"></div>
-			@ForecastRow(w.Forecast)
-		</div>
-	</div>
+templ WeatherWidget(w WeatherData) {
+	@ui.Card("☀️ Weather", nil) {
+		@CurrentConditions(w)
+		<div class="divider my-2"></div>
+		@ForecastRow(w.Forecast)
+	}
 }
 
 templ CurrentConditions(w WeatherData) {
 	<div class="flex items-center gap-4">
-		<div class="text-6xl">@WeatherIcon(w.Condition)</div>
+		<div class="text-6xl">{ weatherIcon(w.Condition) }</div>
 		<div>
 			<div class="text-4xl font-bold">{ fmt.Sprintf("%.1f", w.Temperature) }{ w.TemperatureUnit }</div>
 			<div class="text-base-content/70">{ w.ConditionText }</div>
@@ -76,68 +70,52 @@ templ ForecastRow(days []ForecastDay) {
 		for _, d := range days {
 			<div class="flex flex-col items-center min-w-[60px] text-center">
 				<div class="text-xs font-medium text-base-content/60">{ d.Day }</div>
-				<div class="text-2xl my-1">@WeatherIcon(d.Condition)</div>
+				<div class="text-2xl my-1">{ weatherIcon(d.Condition) }</div>
 				<div class="text-sm font-bold">{ fmt.Sprintf("%.0f", d.High) }°</div>
 				<div class="text-xs text-base-content/50">{ fmt.Sprintf("%.0f", d.Low) }°</div>
-				<div class="text-xs text-info/70 mt-0.5">{ d.PrecipProb }%</div>
+				<div class="text-xs text-info/70 mt-0.5">{ fmt.Sprintf("%d", d.PrecipProb) }%</div>
 			</div>
 		}
 	</div>
 }
 
-templ WeatherIcon(condition string) {
+func weatherIcon(condition string) string {
 	switch condition {
-	case "sunny":
-		<span>☀️</span>
-	case "partlycloudy":
-		<span>⛅</span>
-	case "cloudy":
-		<span>☁️</span>
-	case "rainy":
-		<span>🌧</span>
-	case "pouring":
-		<span>🌧</span>
-	case "snowy":
-		<span>🌨</span>
-	case "fog":
-		<span>🌫</span>
-	case "lightning":
-		<span>⛈</span>
-	case "clear-night":
-		<span>🌙</span>
-	case "windy":
-		<span>💨</span>
-	default:
-		<span>☀️</span>
+	case "sunny":        return "☀️"
+	case "partlycloudy": return "⛅"
+	case "cloudy":       return "☁️"
+	case "rainy":        return "🌧"
+	case "pouring":      return "🌧"
+	case "snowy":        return "🌨"
+	case "fog":          return "🌫"
+	case "lightning":    return "⛈"
+	case "clear-night":  return "🌙"
+	case "windy":        return "💨"
+	default:             return "☀️"
 	}
 }
 
 // ── Events ──────────────────────────────────────────────────────────────────
 
-templ EventsCard(e EventsData) {
-	<div class="card bg-base-100 shadow-sm">
-		<div class="card-body p-5">
-			<h2 class="card-title text-lg mb-3">
-				<span>📅 Events</span>
-				<span class="badge badge-sm">{ fmt.Sprintf("%d", e.TotalCount) }</span>
-			</h2>
-			if len(e.Today) > 0 {
-				<div class="text-xs font-semibold text-base-content/50 uppercase mb-1">Today</div>
-				for _, ev := range e.Today {
-					@EventRow(ev)
-				}
+templ EventsWidget(e EventsData) {
+	@ui.Card("📅 Events", nil) {
+		<span class="badge badge-sm">{ fmt.Sprintf("%d", e.TotalCount) }</span>
+		if len(e.Today) > 0 {
+			<div class="text-xs font-semibold text-base-content/50 uppercase mb-1 mt-2">Today</div>
+			for _, ev := range e.Today {
+				@EventRow(ev)
 			}
-			if len(e.ThisWeek) > 0 {
-				<div class="text-xs font-semibold text-base-content/50 uppercase mt-2 mb-1">This Week</div>
-				for _, ev := range e.ThisWeek {
-					@EventRow(ev)
-				}
+		}
+		if len(e.ThisWeek) > 0 {
+			<div class="text-xs font-semibold text-base-content/50 uppercase mt-2 mb-1">This Week</div>
+			for _, ev := range e.ThisWeek {
+				@EventRow(ev)
 			}
-			if len(e.Today) == 0 && len(e.ThisWeek) == 0 {
-				<div class="text-sm text-base-content/40 italic">No upcoming events</div>
-			}
-		</div>
-	</div>
+		}
+		if len(e.Today) == 0 && len(e.ThisWeek) == 0 {
+			<div class="text-sm text-base-content/40 italic">No upcoming events</div>
+		}
+	}
 }
 
 templ EventRow(ev EventItem) {
@@ -155,23 +133,18 @@ templ EventRow(ev EventItem) {
 
 // ── Alerts ──────────────────────────────────────────────────────────────────
 
-templ AlertsCard(a AlertsData) {
-	<div class="card bg-base-100 shadow-sm">
-		<div class="card-body p-5">
-			<h2 class="card-title text-lg mb-3">
-				<span>⚠️ Alerts</span>
-			</h2>
-			if len(a.Items) == 0 {
-				<div class="alert alert-success">
-					<span>✅ No active alerts</span>
-				</div>
-			} else {
-				for _, al := range a.Items {
-					@AlertBanner(al)
-				}
+templ AlertsWidget(a AlertsData) {
+	@ui.Card("⚠️ Alerts", nil) {
+		if len(a.Items) == 0 {
+			<div class="alert alert-success">
+				<span>✅ No active alerts</span>
+			</div>
+		} else {
+			for _, al := range a.Items {
+				@AlertBanner(al)
 			}
-		</div>
-	</div>
+		}
+	}
 }
 
 templ AlertBanner(a AlertItem) {
@@ -212,20 +185,15 @@ func severityIcon(s string) string {
 
 // ── Energy ──────────────────────────────────────────────────────────────────
 
-templ EnergyCard(e EnergyData) {
-	<div class="card bg-base-100 shadow-sm">
-		<div class="card-body p-5">
-			<h2 class="card-title text-lg mb-3">
-				<span>⚡ Energy</span>
-			</h2>
-			for _, ent := range e.Entities {
-				@EnergyRow(ent)
-			}
-			<div class="divider my-2"></div>
-			@Sparkline(e.Sparkline)
-			<div class="text-xs text-base-content/40 mt-1">Updated { e.UpdatedAt }</div>
-		</div>
-	</div>
+templ EnergyWidget(e EnergyData) {
+	@ui.Card("⚡ Energy", nil) {
+		for _, ent := range e.Entities {
+			@EnergyRow(ent)
+		}
+		<div class="divider my-2"></div>
+		@Sparkline(e.Sparkline)
+		<div class="text-xs text-base-content/40 mt-1">Updated { e.UpdatedAt }</div>
+	}
 }
 
 templ EnergyRow(e EnergyEntity) {
@@ -257,12 +225,12 @@ templ Sparkline(data []int) {
 
 func energyIcon(icon string) string {
 	switch icon {
-	case "sun":    return "☀️"
-	case "zap":    return "⚡"
-	case "plug":   return "🔌"
+	case "sun":     return "☀️"
+	case "zap":     return "⚡"
+	case "plug":    return "🔌"
 	case "battery": return "🔋"
-	case "flame":  return "🔥"
+	case "flame":   return "🔥"
 	case "droplet": return "💧"
-	default:       return "📊"
+	default:        return "📊"
 	}
 }

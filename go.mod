@@ -9,8 +9,11 @@ require (
 	modernc.org/sqlite v1.38.2
 )
 
+require github.com/google/go-cmp v0.7.0 // indirect
+
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/emergent-company/go-daisy v0.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -29,3 +32,5 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
+
+replace github.com/emergent-company/go-daisy => /root/go-daisy

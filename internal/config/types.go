@@ -16,6 +16,7 @@ type Config struct {
 type VillageConfig struct {
 	Name        string  `yaml:"name"`
 	Description string  `yaml:"description"`
+	Address     string  `yaml:"address"`
 	Latitude    float64 `yaml:"latitude"`
 	Longitude   float64 `yaml:"longitude"`
 	Timezone    string  `yaml:"timezone"`

@@ -1,9 +1,13 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -26,6 +30,16 @@ func Load(args []string) (*Config, error) {
 	}
 
 	applyEnvOverrides(cfg)
+
+	if cfg.Village.Address != "" && (cfg.Village.Latitude == 0 && cfg.Village.Longitude == 0) {
+		lat, lng, err := geocode(cfg.Village.Address)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warn: geocode failed for '%s': %v\n", cfg.Village.Address, err)
+		} else {
+			cfg.Village.Latitude = lat
+			cfg.Village.Longitude = lng
+		}
+	}
 
 	if err := Validate(cfg); err != nil {
 		return nil, err
@@ -112,4 +126,31 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("CSRF_SECRET"); v != "" {
 		cfg.Server.CSRFSecret = v
 	}
+}
+
+func geocode(address string) (float64, float64, error) {
+	clean := strings.ReplaceAll(address, ",", "")
+	u := "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + url.QueryEscape(clean)
+	req, _ := http.NewRequest("GET", u, nil)
+	req.Header.Set("User-Agent", "village-pulse/0.1")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, 0, fmt.Errorf("geocode request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var results []struct {
+		Lat string `json:"lat"`
+		Lon string `json:"lon"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		return 0, 0, fmt.Errorf("geocode parse: %w", err)
+	}
+	if len(results) == 0 {
+		return 0, 0, fmt.Errorf("no results for address")
+	}
+
+	lat, _ := strconv.ParseFloat(results[0].Lat, 64)
+	lng, _ := strconv.ParseFloat(results[0].Lon, 64)
+	return lat, lng, nil
 }
